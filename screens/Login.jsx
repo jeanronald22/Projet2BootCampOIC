@@ -76,7 +76,7 @@ const Login = () => {
 							<CustomButton
 								label="sing up"
 								onClick={() =>
-									navigation.navigate('Home', data)
+									navigation.navigate('MyTabs', data)
 								}
 							/>
 						</View>

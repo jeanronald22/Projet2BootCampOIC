@@ -1,33 +1,89 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+	View,
+	Text,
+	StyleSheet,
+	TouchableOpacity,
+	SafeAreaView,
+	StatusBar,
+	ActivityIndicator,
+	FlatList,
+	Image,
+	TextInput,
+} from 'react-native';
+import useFetch from '../common/hooks/useFetch';
+import CustomTextInput from '../components/TextInput/CustomTextInput';
 
 const Home = ({ route }) => {
-	const [openDialog, setOpenDialog] = useState(true);
+	const {
+		data: PokemonList,
+		loading,
+		error,
+	} = useFetch({
+		url: 'https://pokeapi.co/api/v2/pokemon?limit=500',
+	});
+
+	const [pokemonFilter, setPokemonFilter] = useState([]);
+	const [pokemonName, setPokemonName] = useState('');
+	useEffect(() => {
+		if (PokemonList) {
+			if (pokemonName) {
+				const filtered = PokemonList.results.filter((pokemon) =>
+					pokemon.name
+						.toLowerCase()
+						.includes(pokemonName.toLowerCase())
+				);
+				setPokemonFilter(filtered);
+			} else {
+				setPokemonFilter(PokemonList.results);
+			}
+		}
+	}, [pokemonName, PokemonList]);
+	if (loading) {
+		return <Text>loading...</Text>;
+	}
+	if (error) {
+		return <Text>Error....</Text>;
+	}
 
 	return (
-		<View
-			style={[
-				styles.container,
-				{
-					opacity: openDialog ? 0.5 : 1,
-				},
-			]}
-		>
-			{openDialog && (
-				<View style={styles.dialogBox}>
-					<Text style={styles.dialogText}>
-						Welcome {route.params.name} 🔥
-					</Text>
-					<TouchableOpacity
-						style={styles.closeButton}
-						onPress={() => setOpenDialog(false)}
-					>
-						<Text style={styles.closeButtonText}>Close</Text>
-					</TouchableOpacity>
-				</View>
-			)}
-			{/* Other content */}
-		</View>
+		<SafeAreaView>
+			<Text style={styles.headerTxt}>Pokémon List</Text>
+			<View>
+				<TextInput
+					value={pokemonName}
+					onChangeText={(newText) => setPokemonName(newText)}
+					style={{
+						width: '100%',
+						borderWidth: 2,
+						borderColor: 'red',
+					}}
+				/>
+			</View>
+			<FlatList
+				horizontal={false}
+				numColumns={2}
+				data={pokemonFilter}
+				keyExtractor={(item) => item.name}
+				renderItem={({ item }) => {
+					return (
+						<View style={styles.pokemonCard}>
+							<Image
+								style={styles.pokemonImage}
+								source={{
+									uri: `https://img.pokemondb.net/artwork/${item.name}.jpg`,
+								}}
+							/>
+							<Text style={styles.pokemonName}>{item.name}</Text>
+						</View>
+					);
+				}}
+				contentContainerStyle={{
+					paddingBottom: 16,
+				}}
+			/>
+			<StatusBar barStyle="default" />
+		</SafeAreaView>
 	);
 };
 
@@ -38,36 +94,34 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		backgroundColor: '#f5f5f5',
 	},
-	dialogBox: {
-		position: 'absolute',
-		top: '40%',
-		width: '80%',
-		padding: 20,
-		backgroundColor: 'white',
+	headerTxt: {
+		textAlign: 'center',
+		fontSize: 30,
+	},
+	pokemonImage: {
+		width: 100,
+		height: 100,
+		objectFit: 'contain',
+	},
+	pokemonCard: {
+		flex: 1,
+		margin: 8,
+		backgroundColor: '#FFF',
 		borderRadius: 10,
-		elevation: 5,
+		alignItems: 'center',
+		padding: 16,
 		shadowColor: '#000',
 		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.25,
+		shadowOpacity: 0.1,
 		shadowRadius: 4,
-		alignItems: 'center',
+		elevation: 2,
 	},
-	dialogText: {
-		fontSize: 16,
-		color: '#333',
-		marginBottom: 15,
-		textAlign: 'center',
-	},
-	closeButton: {
-		backgroundColor: '#007BFF',
-		paddingVertical: 10,
-		paddingHorizontal: 20,
-		borderRadius: 5,
-	},
-	closeButtonText: {
-		color: 'white',
+	pokemonName: {
 		fontSize: 14,
 		fontWeight: 'bold',
+		color: '#333',
+		marginTop: 8,
+		textAlign: 'center',
 	},
 });
 
